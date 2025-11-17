@@ -1,4 +1,6 @@
 #include <Arduino.h>
 
-size_t get_packet_start_pattern_length();
-char getPacketStartPattern(size_t index);
+bool is_pckt(String);
+String get_pckt(String);
+String rem_pckt(String);
+void pckt_process(String);

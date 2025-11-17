@@ -3,45 +3,31 @@
 
 #include <Arduino.h>
 
-char bridge_buffer[] = {};
+uint8_t bridge_init_seq[6] = {0x23, 0x23, 0x23, 0x1a, 0x1d, 0xff};
+
+String bridge_buffer = "";
+
+void bridge_wseq(uint8_t *seq, size_t size) {
+  Serial.write(seq, size / sizeof(uint8_t));
+}
 
 void bridge_init() {
   Serial.begin(115200);
+
+  delay(1);
+
+  bridge_wseq(bridge_init_seq, sizeof(bridge_init_seq));
 }
 
 void bridge_process() {
   if (!Serial.available())
     return;
 
-  char incoming = Serial.read();
-  
-  // Append incoming byte to buffer
-  size_t len = strlen(bridge_buffer);
-  bridge_buffer[len] = incoming;
-  bridge_buffer[len + 1] = '\0'; // Null-terminate the string
+  bridge_buffer += (char)Serial.read();
 
-  // Check for packet start pattern
-  size_t bufferLen = strlen(bridge_buffer);
-  size_t patternLen = get_packet_start_pattern_length();
+  if (is_pckt(bridge_buffer)) {
+    pckt_process(get_pckt(bridge_buffer));
 
-  if (bufferLen >= patternLen) {
-    bool patternFound = true;
-    for (size_t i = 0; i < patternLen; i++) {
-      if (bridge_buffer[i] != getPacketStartPattern(i)) {
-        patternFound = false;
-        break;
-      }
-    }
-
-    if (patternFound) {
-      // Packet pattern detected
-      Serial.println("Packet start pattern found!");
-      // Clear buffer after detection
-      bridge_buffer[0] = '\0';
-    } else {
-      // Shift buffer left by one to make room for new byte
-      memmove(bridge_buffer, bridge_buffer + 1, bufferLen);
-      bridge_buffer[bufferLen - 1] = '\0'; // Null-terminate the string
-    }
+    bridge_buffer = rem_pckt(bridge_buffer);
   }
 }
