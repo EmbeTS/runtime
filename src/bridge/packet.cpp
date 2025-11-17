@@ -2,6 +2,7 @@
 
 #include "packet.h"
 #include "../os/os.h"
+#include "../fs/fs.h"
 
 String pckt_start_seq = "\x21\x21\x21\x1a\x1d\xff";
 String pckt_end_seq = "\xff\x1d\x1a\x22\x22\x22";
@@ -39,5 +40,18 @@ void pckt_process(String data) {
     case '\x32':
       os_restart();
       break;
+    
+    case '\x33': {
+      int separator_idx = data.indexOf(';', 1);
+      if (separator_idx == -1) {
+        break;
+      }
+
+      String path = data.substring(1, separator_idx);
+      String content = data.substring(separator_idx + 1);
+
+      fs_write(path, content);
+      break;
     }
+  }
 }
