@@ -37,8 +37,6 @@ void kernel_init() {
 void kernel_boot(const char *path) {
   String kpath = fs_read(path);
 
-  Serial.println(fs_read(kpath));
-
   duk_push_string(kernel_ctx, fs_read(kpath).c_str());
   duk_int_t returnCode = duk_peval(kernel_ctx);
 
